@@ -1,11 +1,13 @@
-from .serializers import BoardSerializer
+from .serializers import BoardListSerializer, BoardDetailSerializer
 from kanban_app.models import Board
 from rest_framework import generics
 
 
-class BoardList(generics.ListCreateAPIView):
+class BoardListView(generics.ListCreateAPIView):
     queryset = Board.objects.all()
-    serializer_class = BoardSerializer
+    serializer_class = BoardListSerializer
 
-    def perform_create(self, serializer):
-        serializer.save(owner=self.request.user)
+
+class BoardDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Board.objects.all()
+    serializer_class = BoardDetailSerializer
