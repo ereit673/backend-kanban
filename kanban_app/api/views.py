@@ -1,7 +1,8 @@
-from .serializers import BoardListSerializer, BoardDetailSerializer, BoardUpdateSerializer, UserMiniSerializer, TaskListSerializer, TaskDetailSerializer
-from kanban_app.models import Board, Task
+from .serializers import BoardListSerializer, BoardDetailSerializer, BoardUpdateSerializer, UserMiniSerializer, TaskListSerializer, TaskDetailSerializer, CommentListSerializer
+from kanban_app.models import Board, Task, Comment
 from rest_framework import generics, permissions
 from rest_framework.response import Response
+from rest_framework.exceptions import PermissionDenied
 
 
 class BoardListCreateView(generics.ListCreateAPIView):
@@ -65,3 +66,28 @@ class TaskDetail(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = TaskDetailSerializer
     queryset = Task.objects.all()
     http_method_names = ['patch', 'delete']
+
+
+class CommentList(generics.ListCreateAPIView):
+    serializer_class = CommentListSerializer
+
+    def get_queryset(self):
+        return Comment.objects.filter(task_id=self.kwargs['task_id'])
+
+    def perform_create(self, serializer):
+        task_id = self.kwargs['task_id']
+        task = Task.objects.get(id=task_id)
+        serializer.save(task=task, author=self.request.user)
+
+
+class CommentDestroy(generics.DestroyAPIView):
+    serializer_class = CommentListSerializer
+
+    def get_queryset(self):
+        return Comment.objects.filter(task_id=self.kwargs['task_id'])
+
+    def perform_destroy(self, instance):
+        if instance.author != self.request.user:
+            raise PermissionDenied(
+                "Verboten. Nur der Ersteller des Kommentars darf ihn löschen.")
+        instance.delete()

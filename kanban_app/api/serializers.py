@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from rest_framework import generics
 from rest_framework import serializers
-from kanban_app.models import Board, User, Task
+from kanban_app.models import Board, Task, Comment
 
 User = get_user_model()
 
@@ -168,3 +168,12 @@ class TaskDetailSerializer(serializers.ModelSerializer):
 
         instance.save()
         return instance
+
+
+class CommentListSerializer(serializers.ModelSerializer):
+    author = serializers.StringRelatedField(read_only=True)
+
+    class Meta:
+        model = Comment
+        fields = ['id', 'created_at', 'author', 'content']
+        read_only_fields = ['id', 'created_at', 'author']
