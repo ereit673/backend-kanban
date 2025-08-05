@@ -3,18 +3,9 @@ from rest_framework import generics
 from rest_framework import serializers
 from kanban_app.models import Board, Task, Comment
 
+from user_auth_app.api.serializers import UserMiniSerializer
+
 User = get_user_model()
-
-
-class UserMiniSerializer(serializers.ModelSerializer):
-    fullname = serializers.SerializerMethodField()
-
-    class Meta:
-        model = User
-        fields = ['id', 'email', 'fullname']
-
-    def get_fullname(self, obj):
-        return f"{obj.first_name} {obj.last_name}".strip()
 
 
 class BoardListSerializer(serializers.ModelSerializer):
