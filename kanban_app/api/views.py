@@ -1,18 +1,24 @@
 from django.contrib.auth import get_user_model
-
+from django.db.models import Q
+from .permissions import IsOwnerOrMemberWithDeleteOwnerOnly
 from .serializers import BoardListSerializer, BoardDetailSerializer, BoardUpdateSerializer, UserMiniSerializer, TaskListSerializer, TaskDetailSerializer, CommentListSerializer
 from kanban_app.models import Board, Task, Comment
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
 
 User = get_user_model()
 
 
 class BoardListCreateView(generics.ListCreateAPIView):
-    queryset = Board.objects.all()
     serializer_class = BoardListSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        return Board.objects.filter(Q(owner=user) | Q(members=user)).distinct()
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -22,6 +28,7 @@ class BoardListCreateView(generics.ListCreateAPIView):
 
 class BoardDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Board.objects.all()
+    permission_classes = [IsAuthenticated, IsOwnerOrMemberWithDeleteOwnerOnly]
     http_method_names = ['get', 'patch', 'delete']
 
     def get_serializer_class(self):
@@ -30,9 +37,10 @@ class BoardDetailView(generics.RetrieveUpdateDestroyAPIView):
         return BoardDetailSerializer
 
     def partial_update(self, request, *args, **kwargs):
-        response = super().partial_update(request, *args, **kwargs)
         board = self.get_object()
-
+        self.check_object_permissions(request, board)
+        response = super().partial_update(request, *args, **kwargs)
+        board.refresh_from_db()
         user_serializer = UserMiniSerializer(board.owner)
         members_serializer = UserMiniSerializer(board.members.all(), many=True)
 

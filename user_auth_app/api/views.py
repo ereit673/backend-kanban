@@ -22,7 +22,7 @@ class RegistrationView(APIView):
             (token, created) = Token.objects.get_or_create(user=saved_account)
             data = {
                 'token': token.key,
-                'fullname': saved_account.username,
+                'fullname': f"{saved_account.first_name} {saved_account.last_name}".strip(),
                 'email': saved_account.email,
                 'user_id': saved_account.id
             }
@@ -34,18 +34,17 @@ class RegistrationView(APIView):
 
 class CustomLoginView(ObtainAuthToken):
     permission_classes = [AllowAny]
-    serializer_class = EmailLoginSerializer
 
     def post(self, request):
-        serializer = self.serializer_class(data=request.data)
+        serializer = EmailLoginSerializer(data=request.data)
         data = {}
 
         if serializer.is_valid():
             user = serializer.validated_data['user']
-            (token, created) = Token.objects.get_or_create(user=user)
+            token, created = Token.objects.get_or_create(user=user)
             data = {
                 'token': token.key,
-                'fullname': user.username,
+                'fullname': user.get_full_name(),
                 'email': user.email,
                 'user_id': user.id
             }

@@ -39,15 +39,29 @@ class RegistrationSerializer(serializers.ModelSerializer):
         if data['password'] != data['repeated_password']:
             raise serializers.ValidationError(
                 {'repeated_password': "Passwords don't match"})
+
+        fullname_parts = data['fullname'].strip().split()
+
+        if len(fullname_parts) < 2:
+            raise serializers.ValidationError({
+                'fullname': "Please enter your full name (first and last name)."
+            })
         return data
 
     def create(self, validated_data):
         validated_data.pop('repeated_password')
-        fullname = validated_data.pop('fullname')
-        username = fullname.replace(' ', '')
+        fullname = validated_data.pop('fullname').strip()
+
+        parts = fullname.split(None, 1)
+        first_name = parts[0].capitalize()
+        last_name = parts[1].capitalize() if len(parts) > 1 else ''
 
         user = User(
-            username=username, email=validated_data['email'])
+            username=validated_data['email'],
+            email=validated_data['email'],
+            first_name=first_name,
+            last_name=last_name
+        )
         user.set_password(validated_data['password'])
         user.save()
         return user
