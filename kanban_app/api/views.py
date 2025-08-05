@@ -1,5 +1,5 @@
-from .serializers import BoardListSerializer, BoardDetailSerializer, BoardUpdateSerializer, UserMiniSerializer
-from kanban_app.models import Board
+from .serializers import BoardListSerializer, BoardDetailSerializer, BoardUpdateSerializer, UserMiniSerializer, TaskListSerializer
+from kanban_app.models import Board, Task
 from rest_framework import generics
 from rest_framework.response import Response
 
@@ -38,3 +38,8 @@ class BoardDetailView(generics.RetrieveUpdateDestroyAPIView):
         }
 
         return Response(custom_response)
+
+
+class TaskList(generics.CreateAPIView):
+    queryset = Task.objects.all()
+    serializer_class = TaskListSerializer

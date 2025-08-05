@@ -1,6 +1,9 @@
+from django.contrib.auth import get_user_model
 from rest_framework import generics
 from rest_framework import serializers
 from kanban_app.models import Board, User, Task
+
+User = get_user_model()
 
 
 class UserMiniSerializer(serializers.ModelSerializer):
@@ -91,3 +94,40 @@ class BoardUpdateSerializer(serializers.ModelSerializer):
             instance.members.set(validated_data['members'])
         instance.save()
         return instance
+
+
+class TaskListSerializer(serializers.ModelSerializer):
+    assignee_id = serializers.IntegerField(write_only=True)
+    reviewer_id = serializers.IntegerField(write_only=True)
+
+    assignee = UserMiniSerializer(read_only=True)
+    reviewer = UserMiniSerializer(read_only=True)
+    comments_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Task
+        fields = ['id', 'board', 'title', 'description', 'status',
+                  'priority', 'assignee_id', 'reviewer_id', 'assignee', 'reviewer', 'due_date', 'comments_count']
+
+    def get_comments_count(self, obj):
+        return obj.comments.count()
+
+    def create(self, validated_data):
+        assignee_id = validated_data.pop('assignee_id', None)
+        reviewer_id = validated_data.pop('reviewer_id', None)
+
+        if assignee_id is not None:
+            try:
+                validated_data['assignee'] = User.objects.get(id=assignee_id)
+            except User.DoesNotExist:
+                raise serializers.ValidationError(
+                    {'assignee_id': 'User not found.'})
+
+        if reviewer_id is not None:
+            try:
+                validated_data['reviewer'] = User.objects.get(id=reviewer_id)
+            except User.DoesNotExist:
+                raise serializers.ValidationError(
+                    {'reviewer_id': 'User not found.'})
+
+        return Task.objects.create(**validated_data)
