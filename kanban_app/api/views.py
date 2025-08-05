@@ -54,25 +54,6 @@ class BoardDetailView(generics.RetrieveUpdateDestroyAPIView):
         return Response(custom_response)
 
 
-class EmailCheckView(APIView):
-    def get(self, request):
-        email = request.query_params.get('email')
-
-        if not email:
-            return Response({'detail': 'Email parameter is required.'}, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            user = User.objects.get(email=email)
-        except User.DoesNotExist:
-            return Response(
-                {'detail': 'Email nicht gefunden. Die Email existiert nicht.'},
-                status=status.HTTP_404_NOT_FOUND
-            )
-
-        user_data = UserMiniSerializer(user).data
-        return Response(user_data)
-
-
 class TaskList(generics.CreateAPIView):
     queryset = Task.objects.all()
     serializer_class = TaskListSerializer
