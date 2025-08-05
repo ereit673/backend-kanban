@@ -1,6 +1,6 @@
 from .serializers import BoardListSerializer, BoardDetailSerializer, BoardUpdateSerializer, UserMiniSerializer, TaskListSerializer
 from kanban_app.models import Board, Task
-from rest_framework import generics
+from rest_framework import generics, permissions
 from rest_framework.response import Response
 
 
@@ -43,3 +43,19 @@ class BoardDetailView(generics.RetrieveUpdateDestroyAPIView):
 class TaskList(generics.CreateAPIView):
     queryset = Task.objects.all()
     serializer_class = TaskListSerializer
+
+
+class AssignedToMeTaskList(generics.ListAPIView):
+    serializer_class = TaskListSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Task.objects.filter(assignee=self.request.user)
+
+
+class ReviewingList(generics.ListAPIView):
+    serializer_class = TaskListSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Task.objects.filter(reviewer=self.request.user)
