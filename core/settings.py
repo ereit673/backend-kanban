@@ -135,3 +135,5 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.TokenAuthentication'
     ]
 }
+
+AUTHENTICATION_BACKENDS = ['user_auth_app.backends.EmailBackend']
