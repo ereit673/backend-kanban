@@ -1,4 +1,4 @@
-from .serializers import BoardListSerializer, BoardDetailSerializer, BoardUpdateSerializer, UserMiniSerializer, TaskListSerializer
+from .serializers import BoardListSerializer, BoardDetailSerializer, BoardUpdateSerializer, UserMiniSerializer, TaskListSerializer, TaskDetailSerializer
 from kanban_app.models import Board, Task
 from rest_framework import generics, permissions
 from rest_framework.response import Response
@@ -59,3 +59,9 @@ class ReviewingList(generics.ListAPIView):
 
     def get_queryset(self):
         return Task.objects.filter(reviewer=self.request.user)
+
+
+class TaskDetail(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = TaskDetailSerializer
+    queryset = Task.objects.all()
+    http_method_names = ['patch', 'delete']

@@ -131,3 +131,40 @@ class TaskListSerializer(serializers.ModelSerializer):
                     {'reviewer_id': 'User not found.'})
 
         return Task.objects.create(**validated_data)
+
+
+class TaskDetailSerializer(serializers.ModelSerializer):
+    assignee_id = serializers.IntegerField(write_only=True)
+    reviewer_id = serializers.IntegerField(write_only=True)
+
+    assignee = UserMiniSerializer(read_only=True)
+    reviewer = UserMiniSerializer(read_only=True)
+
+    class Meta:
+        model = Task
+        fields = ['id', 'title', 'description', 'status', 'priority',
+                  'assignee_id', 'reviewer_id', 'assignee', 'reviewer', 'due_date']
+
+    def update(self, instance, validated_data):
+        assignee_id = validated_data.pop('assignee_id', None)
+        reviewer_id = validated_data.pop('reviewer_id', None)
+
+        if assignee_id is not None:
+            try:
+                instance.assignee = User.objects.get(id=assignee_id)
+            except User.DoesNotExist:
+                raise serializers.ValidationError(
+                    {'assignee_id': 'User not found.'})
+
+        if reviewer_id is not None:
+            try:
+                instance.reviewer = User.objects.get(id=reviewer_id)
+            except User.DoesNotExist:
+                raise serializers.ValidationError(
+                    {'reviewer_id': 'User not found.'})
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+
+        instance.save()
+        return instance
