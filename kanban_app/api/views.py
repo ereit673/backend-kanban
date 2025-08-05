@@ -1,8 +1,13 @@
+from django.contrib.auth import get_user_model
+
 from .serializers import BoardListSerializer, BoardDetailSerializer, BoardUpdateSerializer, UserMiniSerializer, TaskListSerializer, TaskDetailSerializer, CommentListSerializer
 from kanban_app.models import Board, Task, Comment
-from rest_framework import generics, permissions
+from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied
+from rest_framework.views import APIView
+
+User = get_user_model()
 
 
 class BoardListCreateView(generics.ListCreateAPIView):
@@ -39,6 +44,25 @@ class BoardDetailView(generics.RetrieveUpdateDestroyAPIView):
         }
 
         return Response(custom_response)
+
+
+class EmailCheckView(APIView):
+    def get(self, request):
+        email = request.query_params.get('email')
+
+        if not email:
+            return Response({'detail': 'Email parameter is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response(
+                {'detail': 'Email nicht gefunden. Die Email existiert nicht.'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        user_data = UserMiniSerializer(user).data
+        return Response(user_data)
 
 
 class TaskList(generics.CreateAPIView):
