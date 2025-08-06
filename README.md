@@ -26,15 +26,24 @@ This project is a Kanban Board application built with Django and Django REST Fra
 
 1. Clone the repository
 
+   ```bash
    git clone https://github.com/ereit673/backend-kanban.git
-   cd yourrepo
+   cd backend-kanban
+
+   ```
 
 2. Create and activate a virtual environment
+
+   ```bash
    python3 -m venv venv
    source venv/bin/activate # On Windows use: venv\Scripts\activate
+   ```
 
 3. Install dependencies
-   pip install -r requirements.txt
+
+```bash
+pip install -r requirements.txt
+```
 
 4. Set up environment variables
    Create a .env file (or configure your environment) with necessary settings such as:
@@ -44,13 +53,22 @@ This project is a Kanban Board application built with Django and Django REST Fra
    - DATABASE_URL or configure settings.py database section accordingly
 
 5. Apply migrations
-   python manage.py migrate
+
+```bash
+python manage.py migrate
+```
 
 6. Create a superuser
-   python manage.py createsuperuser
+
+```bash
+python manage.py createsuperuser
+```
 
 7. Run the development server
-   python manage.py runserver
+
+```bash
+python manage.py runserver
+```
 
 8. Access the app
 
