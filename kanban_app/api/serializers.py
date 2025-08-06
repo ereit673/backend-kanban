@@ -216,9 +216,15 @@ class TaskDetailSerializer(serializers.ModelSerializer):
 
 
 class CommentListSerializer(serializers.ModelSerializer):
-    author = serializers.StringRelatedField(read_only=True)
+    author = serializers.SerializerMethodField()
 
     class Meta:
         model = Comment
         fields = ['id', 'created_at', 'author', 'content']
         read_only_fields = ['id', 'created_at', 'author']
+
+    def get_author(self, obj):
+        first_name = getattr(obj.author, 'first_name', '')
+        last_name = getattr(obj.author, 'last_name', '')
+        fullname = f"{first_name} {last_name}".strip()
+        return fullname if fullname else str(obj.author)

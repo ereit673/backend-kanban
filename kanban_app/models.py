@@ -35,13 +35,14 @@ class Task(models.Model):
     status = models.CharField(
         max_length=15, choices=STATUS_CHOICES, default='to-Do')
     due_date = models.DateField(null=True, blank=True)
-
     board = models.ForeignKey(
         Board, related_name='tasks', on_delete=models.CASCADE)
     assignee = models.ForeignKey(
         User, related_name='assigned_tasks', null=True, blank=True, on_delete=models.SET_NULL)
     reviewer = models.ForeignKey(
         User, related_name='review_tasks', null=True, blank=True, on_delete=models.SET_NULL)
+    owner = models.ForeignKey(
+        User, related_name='owned_tasks', on_delete=models.CASCADE)
 
     def __str__(self):
         return self.title

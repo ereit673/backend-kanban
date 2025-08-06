@@ -1,6 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.db.models import Q
-from .permissions import IsOwnerOrMemberWithDeleteOwnerOnly
+from .permissions import IsOwnerOrMemberWithDeleteOwnerOnly, IsBoardMember, IsTaskOwnerOrBoardOwner, IsBoardMemberForComments
 from .serializers import BoardListSerializer, BoardDetailSerializer, BoardUpdateSerializer, UserMiniSerializer, TaskListSerializer, TaskDetailSerializer, CommentListSerializer
 from kanban_app.models import Board, Task, Comment
 from rest_framework import generics, permissions, status
@@ -70,7 +70,7 @@ class TaskList(generics.CreateAPIView):
             raise PermissionDenied(
                 "You are not allowed to create tasks for this board.")
 
-        serializer.save()
+        serializer.save(owner=self.request.user)
 
 
 class AssignedToMeTaskList(generics.ListAPIView):
@@ -93,10 +93,21 @@ class TaskDetail(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = TaskDetailSerializer
     queryset = Task.objects.all()
     http_method_names = ['patch', 'delete']
+    permission_classes = [IsBoardMember,
+                          IsAuthenticated, IsTaskOwnerOrBoardOwner]
+
+    def partial_update(self, request, *args, **kwargs):
+        if 'board' in request.data:
+            return Response(
+                {"detail": "Modification of the board is not allowed."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        return super().partial_update(request, *args, **kwargs)
 
 
 class CommentList(generics.ListCreateAPIView):
     serializer_class = CommentListSerializer
+    permission_classes = [IsBoardMemberForComments, IsAuthenticated]
 
     def get_queryset(self):
         return Comment.objects.filter(task_id=self.kwargs['task_id'])
@@ -109,12 +120,12 @@ class CommentList(generics.ListCreateAPIView):
 
 class CommentDestroy(generics.DestroyAPIView):
     serializer_class = CommentListSerializer
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         return Comment.objects.filter(task_id=self.kwargs['task_id'])
 
     def perform_destroy(self, instance):
         if instance.author != self.request.user:
-            raise PermissionDenied(
-                "Verboten. Nur der Ersteller des Kommentars darf ihn löschen.")
+            raise PermissionDenied()
         instance.delete()
