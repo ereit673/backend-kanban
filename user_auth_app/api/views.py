@@ -7,6 +7,8 @@ from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth import get_user_model
 from .serializers import RegistrationSerializer, EmailLoginSerializer, UserMiniSerializer
+import random
+import string
 
 
 User = get_user_model()
@@ -54,6 +56,27 @@ class CustomLoginView(ObtainAuthToken):
             data = serializer.errors
 
         return Response(data)
+
+
+class GuestLoginView(APIView):
+    def post(self, request):
+        while True:
+            username = 'guest_' + \
+                ''.join(random.choices(
+                    string.ascii_lowercase + string.digits, k=8))
+            if not User.objects.filter(username=username).exists():
+                break
+
+        user = User.objects.create_user(username=username)
+        user.set_unusable_password()
+        user.save()
+
+        token, created = Token.objects.get_or_create(user=user)
+
+        return Response({
+            "token": token.key,
+            "username": user.username,
+        })
 
 
 class EmailCheckView(APIView):
