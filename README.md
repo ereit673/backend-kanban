@@ -38,3 +38,52 @@ This project is a Kanban Board application built with Django and Django REST Fra
 
 3. Install dependencies
    pip install -r requirements.txt
+
+4. Set up environment variables
+   Create a .env file (or configure your environment) with necessary settings such as:
+
+   - SECRET_KEY
+
+   - DATABASE_URL or configure settings.py database section accordingly
+
+5. Apply migrations
+   python manage.py migrate
+
+6. Create a superuser
+   python manage.py createsuperuser
+
+7. Run the development server
+   python manage.py runserver
+
+8. Access the app
+
+- API Root: http://localhost:8000/api/
+- Admin panel: http://localhost:8000/admin/
+
+## Usage
+
+- Register users or create users via admin panel.
+
+- Create boards and add members.
+
+- Create tasks within boards and assign users.
+
+- Use API endpoints with authentication to manage boards, tasks, and comments.
+
+## Important Notes
+
+- Permissions are strictly enforced:
+
+- Only owners can delete boards.
+
+- Only board members can create and update tasks.
+
+- Comments can be created and deleted only by board members, and deletion is restricted to comment authors.
+
+- Task updates cannot change the associated board.
+
+- The project uses custom permissions classes for fine control over access.
+
+- All API views require authentication.
+
+- Serializer context includes the request for dynamic fields or permissions.
