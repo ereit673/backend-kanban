@@ -22,8 +22,8 @@ class Task(models.Model):
     ]
 
     STATUS_CHOICES = [
-        ('to-Do', 'to-Do'),
-        ('in-Progress', 'in-Progress'),
+        ('to-do', 'to-do'),
+        ('in-progress', 'in-progress'),
         ('review', 'review'),
         ('done', 'done'),
     ]
