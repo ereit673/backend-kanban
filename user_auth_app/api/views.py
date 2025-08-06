@@ -17,21 +17,20 @@ class RegistrationView(APIView):
 
     def post(self, request):
         serializer = RegistrationSerializer(data=request.data)
-        data = {}
 
         if serializer.is_valid():
             saved_account = serializer.save()
-            (token, created) = Token.objects.get_or_create(user=saved_account)
-            data = {
-                'token': token.key,
-                'fullname': f"{saved_account.first_name} {saved_account.last_name}".strip(),
-                'email': saved_account.email,
-                'user_id': saved_account.id
-            }
-        else:
-            data = serializer.errors
+            return Response(self.build_success_response(saved_account))
+        return Response(serializer.errors)
 
-        return Response(data)
+    def build_success_response(self, user):
+        token, _ = Token.objects.get_or_create(user=user)
+        return {
+            'token': token.key,
+            'fullname': f"{user.first_name} {user.last_name}".strip(),
+            'email': user.email,
+            'user_id': user.id
+        }
 
 
 class CustomLoginView(ObtainAuthToken):
@@ -39,21 +38,20 @@ class CustomLoginView(ObtainAuthToken):
 
     def post(self, request):
         serializer = EmailLoginSerializer(data=request.data)
-        data = {}
 
         if serializer.is_valid():
             user = serializer.validated_data['user']
-            token, created = Token.objects.get_or_create(user=user)
-            data = {
-                'token': token.key,
-                'fullname': user.get_full_name(),
-                'email': user.email,
-                'user_id': user.id
-            }
-        else:
-            data = serializer.errors
+            return Response(self.build_success_response(user))
+        return Response(serializer.errors)
 
-        return Response(data)
+    def build_success_response(self, user):
+        token, _ = Token.objects.get_or_create(user=user)
+        return {
+            'token': token.key,
+            'fullname': user.get_full_name(),
+            'email': user.email,
+            'user_id': user.id
+        }
 
 
 class EmailCheckView(APIView):
