@@ -20,8 +20,16 @@ class RegistrationView(APIView):
 
         if serializer.is_valid():
             saved_account = serializer.save()
-            return Response(self.build_success_response(saved_account))
-        return Response(serializer.errors)
+            token, created = Token.objects.get_or_create(user=saved_account)
+
+            return Response({
+                'token': token.key,
+                'fullname': f"{saved_account.first_name} {saved_account.last_name}".strip(),
+                'email': saved_account.email,
+                'user_id': saved_account.id
+            }, status=status.HTTP_201_CREATED)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def build_success_response(self, user):
         token, _ = Token.objects.get_or_create(user=user)
@@ -41,8 +49,9 @@ class CustomLoginView(ObtainAuthToken):
 
         if serializer.is_valid():
             user = serializer.validated_data['user']
-            return Response(self.build_success_response(user))
-        return Response(serializer.errors)
+            return Response(self.build_success_response(user), status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def build_success_response(self, user):
         token, _ = Token.objects.get_or_create(user=user)

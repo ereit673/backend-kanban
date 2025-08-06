@@ -19,7 +19,9 @@ class UserMiniSerializer(serializers.ModelSerializer):
 
 class RegistrationSerializer(serializers.ModelSerializer):
     repeated_password = serializers.CharField(write_only=True)
-    fullname = serializers.CharField(write_only=True)
+    fullname = serializers.CharField(
+        write_only=True, required=True, allow_blank=False
+    )
 
     class Meta:
         model = User
@@ -35,26 +37,25 @@ class RegistrationSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('Email already exists')
         return value
 
+    def validate_fullname(self, value):
+        if not value.strip():
+            raise serializers.ValidationError("Full name is required.")
+        parts = value.strip().split()
+        if len(parts) < 2:
+            raise serializers.ValidationError(
+                "Please enter your full name (first and last name).")
+        return value
+
     def validate(self, data):
-        self.validate_password_match(data)
-        self.validate_fullname(data['fullname'])
+        if data['password'] != data['repeated_password']:
+            raise serializers.ValidationError({
+                'repeated_password': "Passwords don't match"
+            })
         return data
 
-    def validate_password_match(self, data):
-        if data['password'] != data['repeated_password']:
-            raise serializers.ValidationError(
-                {'repeated_password': "Passwords don't match"})
-
-    def validate_fullname(self, fullname):
-        parts = fullname.strip().split()
-        if len(parts) < 2:
-            raise serializers.ValidationError({
-                'fullname': "Please enter your full name (first and last name)."
-            })
-
     def create(self, validated_data):
-        validated_data.pop('repeated_password')
-        fullname = validated_data.pop('fullname').strip()
+        validated_data.pop('repeated_password', None)
+        fullname = validated_data.pop('fullname', '').strip()
         first_name, last_name = self.split_fullname(fullname)
 
         user = User(
