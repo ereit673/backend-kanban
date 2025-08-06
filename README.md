@@ -27,7 +27,7 @@ This project is a Kanban Board application built with Django and Django REST Fra
 1. Clone the repository
 
    ```bash
-   git clone https://github.com/yourusername/yourrepo.git
+   git clone https://github.com/ereit673/backend-kanban.git
    cd yourrepo
 
    ```
