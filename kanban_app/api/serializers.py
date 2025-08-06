@@ -2,10 +2,19 @@ from django.contrib.auth import get_user_model
 from rest_framework import generics
 from rest_framework import serializers
 from kanban_app.models import Board, Task, Comment
+from rest_framework.exceptions import NotFound, PermissionDenied
 
 from user_auth_app.api.serializers import UserMiniSerializer
 
 User = get_user_model()
+
+
+class BoardRelatedField(serializers.PrimaryKeyRelatedField):
+    def to_internal_value(self, data):
+        try:
+            return super().to_internal_value(data)
+        except serializers.ValidationError:
+            raise NotFound("Board not found")
 
 
 class BoardListSerializer(serializers.ModelSerializer):
@@ -90,7 +99,7 @@ class BoardUpdateSerializer(serializers.ModelSerializer):
 class TaskListSerializer(serializers.ModelSerializer):
     assignee_id = serializers.IntegerField(write_only=True)
     reviewer_id = serializers.IntegerField(write_only=True)
-
+    board = BoardRelatedField(queryset=Board.objects.all())
     assignee = UserMiniSerializer(read_only=True)
     reviewer = UserMiniSerializer(read_only=True)
     comments_count = serializers.SerializerMethodField()
@@ -122,6 +131,51 @@ class TaskListSerializer(serializers.ModelSerializer):
                     {'reviewer_id': 'User not found.'})
 
         return Task.objects.create(**validated_data)
+
+    def validate(self, data):
+        request = self.context['request']
+        user = request.user
+        board = data.get('board')
+
+        if user != board.owner and user not in board.members.all():
+            raise PermissionDenied(
+                "You are not allowed to create tasks for this board.")
+
+        return data
+
+    def validate_assignee_id(self, value):
+        board_id = self.initial_data.get('board')
+        board = Board.objects.filter(pk=board_id).first()
+
+        if not board:
+            raise NotFound("Board not found.")
+
+        try:
+            user = User.objects.get(pk=value)
+        except User.DoesNotExist:
+            raise serializers.ValidationError("Assignee not found.")
+
+        if user != board.owner and user not in board.members.all():
+            raise PermissionDenied("Assignee must be a member of the board.")
+
+        return value
+
+    def validate_reviewer_id(self, value):
+        board = self.initial_data.get('board')
+        board = Board.objects.filter(pk=board).first()
+
+        if not board:
+            raise NotFound("Board not found.")
+
+        try:
+            user = User.objects.get(pk=value)
+        except User.DoesNotExist:
+            raise serializers.ValidationError("Reviewer not found.")
+
+        if user != board.owner and user not in board.members.all():
+            raise PermissionDenied("Reviewer must be a member of the board.")
+
+        return value
 
 
 class TaskDetailSerializer(serializers.ModelSerializer):

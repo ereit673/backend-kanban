@@ -16,24 +16,24 @@ class Board(models.Model):
 
 class Task(models.Model):
     PRIORITY_CHOICES = [
-        ('Low', 'Low'),
-        ('Medium', 'Medium'),
-        ('High', 'High')
+        ('low', 'low'),
+        ('medium', 'medium'),
+        ('high', 'high')
     ]
 
     STATUS_CHOICES = [
-        ('To-Do', 'To-Do'),
-        ('In-Progress', 'In-Progress'),
-        ('Review', 'Review'),
-        ('Done', 'Done'),
+        ('to-Do', 'to-Do'),
+        ('in-Progress', 'in-Progress'),
+        ('review', 'review'),
+        ('done', 'done'),
     ]
 
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
     priority = models.CharField(
-        max_length=10, choices=PRIORITY_CHOICES, default='Medium')
+        max_length=10, choices=PRIORITY_CHOICES, default='medium')
     status = models.CharField(
-        max_length=15, choices=STATUS_CHOICES, default='To-Do')
+        max_length=15, choices=STATUS_CHOICES, default='to-Do')
     due_date = models.DateField(null=True, blank=True)
 
     board = models.ForeignKey(

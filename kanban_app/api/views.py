@@ -5,7 +5,7 @@ from .serializers import BoardListSerializer, BoardDetailSerializer, BoardUpdate
 from kanban_app.models import Board, Task, Comment
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
-from rest_framework.exceptions import PermissionDenied
+from rest_framework.exceptions import PermissionDenied, NotFound
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 
@@ -57,6 +57,20 @@ class BoardDetailView(generics.RetrieveUpdateDestroyAPIView):
 class TaskList(generics.CreateAPIView):
     queryset = Task.objects.all()
     serializer_class = TaskListSerializer
+    permission_classes = [IsAuthenticated]
+
+    def perform_create(self, serializer):
+        board = serializer.validated_data.get('board')
+        user = self.request.user
+
+        if not Board.objects.filter(id=board.id).exists():
+            raise NotFound("Board not found")
+
+        if user != board.owner and user not in board.members.all():
+            raise PermissionDenied(
+                "You are not allowed to create tasks for this board.")
+
+        serializer.save()
 
 
 class AssignedToMeTaskList(generics.ListAPIView):
