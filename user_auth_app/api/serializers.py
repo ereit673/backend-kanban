@@ -36,25 +36,26 @@ class RegistrationSerializer(serializers.ModelSerializer):
         return value
 
     def validate(self, data):
+        self.validate_password_match(data)
+        self.validate_fullname(data['fullname'])
+        return data
+
+    def validate_password_match(self, data):
         if data['password'] != data['repeated_password']:
             raise serializers.ValidationError(
                 {'repeated_password': "Passwords don't match"})
 
-        fullname_parts = data['fullname'].strip().split()
-
-        if len(fullname_parts) < 2:
+    def validate_fullname(self, fullname):
+        parts = fullname.strip().split()
+        if len(parts) < 2:
             raise serializers.ValidationError({
                 'fullname': "Please enter your full name (first and last name)."
             })
-        return data
 
     def create(self, validated_data):
         validated_data.pop('repeated_password')
         fullname = validated_data.pop('fullname').strip()
-
-        parts = fullname.split(None, 1)
-        first_name = parts[0].capitalize()
-        last_name = parts[1].capitalize() if len(parts) > 1 else ''
+        first_name, last_name = self.split_fullname(fullname)
 
         user = User(
             username=validated_data['email'],
@@ -65,6 +66,12 @@ class RegistrationSerializer(serializers.ModelSerializer):
         user.set_password(validated_data['password'])
         user.save()
         return user
+
+    def split_fullname(self, fullname):
+        parts = fullname.split(None, 1)
+        first = parts[0].capitalize()
+        last = parts[1].capitalize() if len(parts) > 1 else ''
+        return first, last
 
 
 class EmailLoginSerializer(serializers.Serializer):
