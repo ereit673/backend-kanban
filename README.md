@@ -26,11 +26,8 @@ This project is a Kanban Board application built with Django and Django REST Fra
 
 1. Clone the repository
 
-   ```bash
    git clone https://github.com/ereit673/backend-kanban.git
    cd yourrepo
-
-   ```
 
 2. Create and activate a virtual environment
    python3 -m venv venv
