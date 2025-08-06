@@ -113,24 +113,22 @@ class TaskListSerializer(serializers.ModelSerializer):
         return obj.comments.count()
 
     def create(self, validated_data):
-        assignee_id = validated_data.pop('assignee_id', None)
-        reviewer_id = validated_data.pop('reviewer_id', None)
-
-        if assignee_id is not None:
-            try:
-                validated_data['assignee'] = User.objects.get(id=assignee_id)
-            except User.DoesNotExist:
-                raise serializers.ValidationError(
-                    {'assignee_id': 'User not found.'})
-
-        if reviewer_id is not None:
-            try:
-                validated_data['reviewer'] = User.objects.get(id=reviewer_id)
-            except User.DoesNotExist:
-                raise serializers.ValidationError(
-                    {'reviewer_id': 'User not found.'})
-
+        validated_data['assignee'] = self.resolve_user(
+            validated_data.pop('assignee_id', None), 'assignee_id'
+        )
+        validated_data['reviewer'] = self.resolve_user(
+            validated_data.pop('reviewer_id', None), 'reviewer_id'
+        )
         return Task.objects.create(**validated_data)
+
+    def resolve_user(self, user_id, field_name):
+        if user_id is not None:
+            try:
+                return User.objects.get(id=user_id)
+            except User.DoesNotExist:
+                raise serializers.ValidationError(
+                    {field_name: 'User not found.'})
+        return None
 
     def validate(self, data):
         request = self.context['request']
