@@ -41,17 +41,15 @@ class BoardDetailView(generics.RetrieveUpdateDestroyAPIView):
         self.check_object_permissions(request, board)
         response = super().partial_update(request, *args, **kwargs)
         board.refresh_from_db()
-        user_serializer = UserMiniSerializer(board.owner)
-        members_serializer = UserMiniSerializer(board.members.all(), many=True)
+        return Response(self.build_custom_response(board))
 
-        custom_response = {
+    def build_custom_response(self, board):
+        return {
             "id": board.id,
             "title": board.title,
-            "owner_data": user_serializer.data,
-            "members_data": members_serializer.data
+            "owner_data": UserMiniSerializer(board.owner).data,
+            "members_data": UserMiniSerializer(board.members.all(), many=True).data,
         }
-
-        return Response(custom_response)
 
 
 class TaskList(generics.CreateAPIView):
@@ -61,16 +59,17 @@ class TaskList(generics.CreateAPIView):
 
     def perform_create(self, serializer):
         board = serializer.validated_data.get('board')
-        user = self.request.user
+        self.check_user_can_create_task(board)
+        serializer.save(owner=self.request.user)
 
+    def check_user_can_create_task(self, board):
         if not Board.objects.filter(id=board.id).exists():
             raise NotFound("Board not found")
 
+        user = self.request.user
         if user != board.owner and user not in board.members.all():
             raise PermissionDenied(
                 "You are not allowed to create tasks for this board.")
-
-        serializer.save(owner=self.request.user)
 
 
 class AssignedToMeTaskList(generics.ListAPIView):
@@ -113,9 +112,14 @@ class CommentList(generics.ListCreateAPIView):
         return Comment.objects.filter(task_id=self.kwargs['task_id'])
 
     def perform_create(self, serializer):
-        task_id = self.kwargs['task_id']
-        task = Task.objects.get(id=task_id)
+        task = self.get_task_or_404()
         serializer.save(task=task, author=self.request.user)
+
+    def get_task_or_404(self):
+        try:
+            return Task.objects.get(id=self.kwargs['task_id'])
+        except Task.DoesNotExist:
+            raise NotFound("Task not found.")
 
 
 class CommentDestroy(generics.DestroyAPIView):
