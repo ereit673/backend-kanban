@@ -15,12 +15,7 @@ class IsBoardMember(BasePermission):
     def has_object_permission(self, request, view, obj):
         board = obj.board
         user = request.user
-
-        if user in board.members.all():
-            return True
-
-        raise PermissionDenied(
-            "You do not have permission to modify this task.")
+        return user in board.members.all()
 
 
 class IsTaskOwnerOrBoardOwner(BasePermission):
@@ -32,13 +27,17 @@ class IsTaskOwnerOrBoardOwner(BasePermission):
 
 class IsBoardMemberForComments(BasePermission):
     def has_permission(self, request, view):
-        task_id = view.kwargs.get('task_id')
-        try:
-            task = Task.objects.get(id=task_id)
-        except Task.DoesNotExist:
+        task = self.get_task(view)
+        if not task:
             return False
 
         user = request.user
         board = task.board
-
         return user == board.owner or user in board.members.all()
+
+    def get_task(self, view):
+        task_id = view.kwargs.get('task_id')
+        try:
+            return Task.objects.get(id=task_id)
+        except Task.DoesNotExist:
+            return None
