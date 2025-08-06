@@ -13,9 +13,20 @@ User = get_user_model()
 
 
 class RegistrationView(APIView):
+    """API view to handle user registration."""
+
     permission_classes = [AllowAny]
 
     def post(self, request):
+        """Handle POST request to register a new user.
+
+        Args:
+            request: The HTTP request containing user registration data.
+
+        Returns:
+            Response with token and user info on success (201),
+            or error details on failure (400).
+        """
         serializer = RegistrationSerializer(data=request.data)
 
         if serializer.is_valid():
@@ -32,6 +43,14 @@ class RegistrationView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def build_success_response(self, user):
+        """Construct a successful registration response payload.
+
+        Args:
+            user: The newly registered user instance.
+
+        Returns:
+            dict: Contains the auth token and basic user info.
+        """
         token, _ = Token.objects.get_or_create(user=user)
         return {
             'token': token.key,
@@ -42,9 +61,20 @@ class RegistrationView(APIView):
 
 
 class CustomLoginView(ObtainAuthToken):
+    """API view to handle user login and token generation."""
+
     permission_classes = [AllowAny]
 
     def post(self, request):
+        """Handle POST request to authenticate user.
+
+        Args:
+            request: The HTTP request containing login credentials.
+
+        Returns:
+            Response with token and user info on success (200),
+            or error details on failure (400).
+        """
         serializer = EmailLoginSerializer(data=request.data)
 
         if serializer.is_valid():
@@ -54,6 +84,14 @@ class CustomLoginView(ObtainAuthToken):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def build_success_response(self, user):
+        """Construct a successful login response payload.
+
+        Args:
+            user: The authenticated user instance.
+
+        Returns:
+            dict: Contains the auth token and basic user info.
+        """
         token, _ = Token.objects.get_or_create(user=user)
         return {
             'token': token.key,
@@ -64,9 +102,23 @@ class CustomLoginView(ObtainAuthToken):
 
 
 class EmailCheckView(APIView):
+    """API view to check if an email exists in the system.
+
+    Requires authentication.
+    """
+
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        """Handle GET request to check if email exists.
+
+        Args:
+            request: The HTTP request with 'email' query parameter.
+
+        Returns:
+            Response with user data if email exists (200),
+            error detail if missing param (400) or not found (404).
+        """
         email = request.query_params.get('email')
 
         if not email:
