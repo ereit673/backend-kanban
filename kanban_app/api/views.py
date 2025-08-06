@@ -1,12 +1,17 @@
 from django.contrib.auth import get_user_model
 from django.db.models import Q
-from .permissions import IsOwnerOrMemberWithDeleteOwnerOnly, IsBoardMember, IsTaskOwnerOrBoardOwner, IsBoardMemberForComments
-from .serializers import BoardListSerializer, BoardDetailSerializer, BoardUpdateSerializer, UserMiniSerializer, TaskListSerializer, TaskDetailSerializer, CommentListSerializer
-from kanban_app.models import Board, Task, Comment
+
 from rest_framework import generics, permissions, status
-from rest_framework.response import Response
-from rest_framework.exceptions import PermissionDenied, NotFound
+from rest_framework.exceptions import NotFound, PermissionDenied
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+
+from kanban_app.models import Board, Comment, Task
+
+from .permissions import IsBoardMember, IsBoardMemberForComments, IsOwnerOrMemberWithDeleteOwnerOnly, IsTaskOwnerOrBoardOwner
+from .serializers import (BoardDetailSerializer, BoardListSerializer, BoardUpdateSerializer,
+                          CommentListSerializer, TaskDetailSerializer, TaskListSerializer, UserMiniSerializer)
+
 
 User = get_user_model()
 

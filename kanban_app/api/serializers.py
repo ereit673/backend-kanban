@@ -1,8 +1,9 @@
 from django.contrib.auth import get_user_model
-from rest_framework import generics
+
 from rest_framework import serializers
-from kanban_app.models import Board, Task, Comment
 from rest_framework.exceptions import NotFound, PermissionDenied
+
+from kanban_app.models import Board, Task, Comment
 
 from user_auth_app.api.serializers import UserMiniSerializer
 
